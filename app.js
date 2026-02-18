@@ -14,7 +14,6 @@ class ShadowMuscle {
             try {
                 this.data = JSON.parse(saved);
             } catch (e) {
-                // corrupted save, drop it and start fresh
                 console.warn('ShadowMuscle: failed to parse saved data, resetting.', e);
                 localStorage.removeItem('shadow_muscle_save');
                 this.data = null;
@@ -25,15 +24,21 @@ class ShadowMuscle {
             this.data = {
                 level: 1,
                 xp: 0,
-                stats: { force: 10, endurance: 10, mental: 10, discipline: 10, aura: 10 },
+                stats: {
+                    force: 10,
+                    endurance: 10,
+                    mental: 10,
+                    discipline: 10,
+                    aura: 10
+                },
                 streak: 0,
                 lastDate: null,
                 badges: [],
                 history: [],
-                customMissions: [] // user-defined missions
+                customMissions: []
             };
         }
-        // ensure we always have a place for custom missions when reloading
+
         this.data.customMissions = this.data.customMissions || [];
 
         this.BADGES_DB = [
@@ -46,59 +51,46 @@ class ShadowMuscle {
         ];
 
         this.MISSIONS = [
-            { id: 'pompes', title: '100 Pompes', xp: 200, stat: 'force' },
-            { id: 'squats', title: '100 Squats', xp: 200, stat: 'force' },
-            { id: 'abdos', title: '100 Abdos', xp: 180, stat: 'discipline' },
-            { id: 'run', title: '10km Course', xp: 250, stat: 'endurance' },
-            { id: 'lecture', title: 'Lecture 30min', xp: 150, stat: 'mental' },
-            { id: 'meditation', title: 'Méditation 10min', xp: 150, stat: 'aura' }
+            { id: 'pompes', title: '20 Pompes', xp: 200, stat: 'force' },
+            { id: 'squats', title: '30 Squats', xp: 200, stat: 'force' },
+            { id: 'abdos', title: '30 Abdos', xp: 200, stat: 'discipline' },
+            { id: 'gainage', title: '45s Gainage', xp: 200, stat: 'endurance' },
+            { id: 'fentes', title: '20 Fentes (10/jambe)', xp: 200, stat: 'force' },
+            { id: 'mountain', title: '30 Mountain Climbers', xp: 200, stat: 'endurance' }
         ];
     }
 
     init() {
-        // prepare mission pools before rendering
         this.generateDailyMissions();
-
-        // simple static weekly / monthly samples – could be replaced by more complex logic later
         this.weeklyMissions = [
-            { id: 'hebdo_5jours', title: 'Fermer 5 jours consécutifs', xp: 500, stat: 'discipline' }
+            { id: 'hebdo_5jours', title: 'S' + 'é' + 'rie de 5 jours', xp: 1000, stat: 'discipline' }
         ];
         this.monthlyMissions = [
-            { id: 'mensuel_30jours', title: 'Fermer 30 jours consécutifs', xp: 1500, stat: 'aura' }
+            { id: 'mensuel_30jours', title: 'S' + 'é' + 'rie de 30 jours', xp: 5000, stat: 'aura' }
         ];
-
         this.setupTabs();
         this.setupSubTabs();
         this.renderAll();
         this.setupEventListeners();
         this.checkStreak();
         this.requestNotify();
-        console.log("System : Initialized. System: Arise.");
+        console.log(\"System : Initialized. System: Arise.\");
     }
 
     setupTabs() {
-        // use delegation in case elements are replaced later; only one listener
         const nav = document.querySelector('.tab-nav');
-        if (!nav) {
-            console.warn('setupTabs: .tab-nav container not found');
-            return;
-        }
+        if (!nav) return;
         nav.addEventListener('click', e => {
             const btn = e.target.closest('.tab-btn');
-            if (!btn) return; // click outside a button
-            const tabKey = btn.dataset.tab;
-            console.log('ShadowMuscle: tab clicked ->', tabKey);
-            this.switchTab(tabKey);
+            if (!btn) return;
+            this.switchTab(btn.dataset.tab);
         });
     }
 
-    /**
-     * public helper so inline handlers work and easy debugging
-     */
     switchTab(tabKey) {
         if (!tabKey) return;
         document.querySelectorAll('.tab-btn, .tab-panel').forEach(el => el.classList.remove('active'));
-        const btn = document.querySelector(`.tab-btn[data-tab="${tabKey}"]`);
+        const btn = document.querySelector(`.tab-btn[data-tab=\"${tabKey}\"]`);
         if (btn) btn.classList.add('active');
         const panel = document.getElementById('tab-' + tabKey);
         if (panel) panel.classList.add('active');
@@ -112,21 +104,14 @@ class ShadowMuscle {
     }
 
     renderStatus() {
-        // update level and rank
         const levelEl = document.getElementById('currentLevel');
         if (levelEl) levelEl.textContent = this.data.level;
-        const rankEl = document.getElementById('rank');
-        if (rankEl && this.data.rank) rankEl.textContent = this.data.rank;
-
-        // xp bar
-        const nextXP = this.data.level * 500;
+        const nextXP = this.data.level * 150;
         const percent = Math.min((this.data.xp / nextXP) * 100, 100);
         const progress = document.getElementById('xpProgress');
         if (progress) progress.style.width = percent + '%';
         const xpText = document.getElementById('xpText');
         if (xpText) xpText.textContent = `${this.data.xp} / ${nextXP} XP`;
-
-        // individual stats
         ['force','endurance','mental','discipline','aura'].forEach(stat => {
             const el = document.getElementById(stat);
             if (el) el.textContent = this.data.stats[stat] || 0;
@@ -134,61 +119,69 @@ class ShadowMuscle {
     }
 
     renderPortails() {
-        // populate each category container with appropriate missions
         const dailyDiv = document.getElementById('dailyMissions');
         if (dailyDiv) {
-            dailyDiv.innerHTML = (this.dailyMissions || []).map(m => `
-                <div class="mission">
-                    <span>${m.title} <span class="xp-badge">+${m.xp} XP</span></span>
-                    <button class="mission-btn" onclick="app.completeMission('${m.id}')">COMPLÉTER</button>
+            dailyDiv.innerHTML = (this.dailyMissions || []).map(m => \`
+                <div class=\"mission-card\">
+                    <div class=\"mission-info\">
+                        <span class=\"mission-title\">\${m.title}</span>
+                        <span class=\"mission-xp\">+\${m.xp} XP</span>
+                    </div>
+                    <button class=\"btn-complete\" onclick=\"app.completeMission('\${m.id}')\">COMPLÉTER</button>
                 </div>
-            `).join('');
+            \`).join('');
         }
-
         const weeklyDiv = document.getElementById('weeklyMissions');
         if (weeklyDiv) {
-            weeklyDiv.innerHTML = (this.weeklyMissions || []).map(m => `
-                <div class="mission">
-                    <span>${m.title} <span class="xp-badge">+${m.xp} XP</span></span>
-                    <button class="mission-btn" onclick="app.completeMission('${m.id}')">COMPLÉTER</button>
+            weeklyDiv.innerHTML = (this.weeklyMissions || []).map(m => \`
+                <div class=\"mission-card\">
+                    <div class=\"mission-info\">
+                        <span class=\"mission-title\">\${m.title}</span>
+                        <span class=\"mission-xp\">+\${m.xp} XP</span>
+                    </div>
+                    <button class=\"btn-complete\" onclick=\"app.completeMission('\${m.id}')\">COMPLÉTER</button>
                 </div>
-            `).join('');
+            \`).join('');
         }
-
         const monthlyDiv = document.getElementById('monthlyMissions');
         if (monthlyDiv) {
-            monthlyDiv.innerHTML = (this.monthlyMissions || []).map(m => `
-                <div class="mission">
-                    <span>${m.title} <span class="xp-badge">+${m.xp} XP</span></span>
-                    <button class="mission-btn" onclick="app.completeMission('${m.id}')">COMPLÉTER</button>
+            monthlyDiv.innerHTML = (this.monthlyMissions || []).map(m => \`
+                <div class=\"mission-card\">
+                    <div class=\"mission-info\">
+                        <span class=\"mission-title\">\${m.title}</span>
+                        <span class=\"mission-xp\">+\${m.xp} XP</span>
+                    </div>
+                    <button class=\"btn-complete\" onclick=\"app.completeMission('\${m.id}')\">COMPLÉTER</button>
                 </div>
-            `).join('');
+            \`).join('');
         }
-
         const customDiv = document.getElementById('customMissions');
         if (customDiv) {
-            customDiv.innerHTML = (this.data.customMissions || []).map((m, i) => `
-                <div class="mission">
-                    <span>${m.title}${m.xp ? ` <span class="xp-badge">+${m.xp} XP</span>` : ''}</span>
-                    <button class="mission-btn" onclick="app.completeCustomMission(${i})">COMPLÉTER</button>
+            customDiv.innerHTML = (this.data.customMissions || []).map((m, i) => \`
+                <div class=\"mission-card\">
+                    <div class=\"mission-info\">
+                        <span class=\"mission-title\">\${m.title}\${m.xp ? \` (+\${m.xp} XP)\` : ''}</span>
+                    </div>
+                    <button class=\"btn-complete\" onclick=\"app.completeCustomMission(\${i})\">COMPLÉTER</button>
                 </div>
-            `).join('');
+            \`).join('');
         }
     }
 
     renderArtefacts() {
-        // some HTML versions use camelCase IDs – support both for backwards compatibility
         const container = document.getElementById('badges-container') || document.getElementById('badgesContainer');
         if (container) {
             container.innerHTML = this.BADGES_DB.map(b => {
                 const owned = this.data.badges.includes(b.id);
-                return `
-                    <div class="badge-card ${owned ? '' : 'locked'}">
-                        <span class="badge-icon">${b.icon}</span>
-                        <div class="badge-name">${b.name}</div>
-                        <div class="badge-desc">${b.desc}</div>
+                return \`
+                    <div class=\"badge-item \${owned ? 'owned' : 'locked'}\" title=\"\${b.desc}\">
+                        <div class=\"badge-icon\">\${b.icon}</div>
+                        <div class=\"badge-details\">
+                            <span class=\"badge-name\">\${b.name}</span>
+                            <span class=\"badge-desc\">\${b.desc}</span>
+                        </div>
                     </div>
-                `;
+                \`;
             }).join('');
         }
     }
@@ -196,97 +189,35 @@ class ShadowMuscle {
     renderGrimoire() {
         const container = document.getElementById('history-container') || document.getElementById('historyContainer');
         if (container) {
-            container.innerHTML = this.data.history.slice(-14).reverse().map(h => `
-                <div class="history-day success">
-                    <span class="history-date">[${h.date}] ${h.text}</span>
-                    <span>+${h.xp} XP</span>
+            container.innerHTML = this.data.history.slice(-14).reverse().map(h => \`
+                <div class=\"history-item\">
+                    <span class=\"history-date\">[\${h.date}]</span>
+                    <span class=\"history-text\">\${h.text}</span>
+                    <span class=\"history-xp\">+\${h.xp} XP</span>
                 </div>
-            `).join('');
+            \`).join('');
         }
     }
 
-    // ---------- mission helper methods ----------
-
     generateDailyMissions() {
-        // pick 3 random items from a pool of exercises
         const exercises = [
-            // BOXE
-            { id: 'shadowboxing', title: '20 min Shadow Boxing', xp: 200, stat: 'discipline' },
-            { id: 'sparring', title: '30 min Sparring', xp: 250, stat: 'discipline' },
-            { id: 'sac', title: '3 rounds Sac de Frappe', xp: 220, stat: 'force' },
-            // MUSCU
-            { id: 'pompes', title: '100 Pompes', xp: 200, stat: 'force' },
-            { id: '30pompes', title: '30 Pompes explosives', xp: 210, stat: 'force' },
-            { id: 'onehand', title: '10 Pompes à une main', xp: 250, stat: 'force' },
-            { id: 'squats', title: '100 Squats', xp: 200, stat: 'endurance' },
-            { id: '50squats', title: '50 Squats profonds', xp: 210, stat: 'endurance' },
-            { id: '200squats', title: '200 Squats', xp: 250, stat: 'endurance' },
-            // MENTAL & CARDIO
-            { id: 'meditation', title: '30 min Méditation', xp: 150, stat: 'mental' },
-            { id: 'lecture', title: 'Lecture 30min', xp: 150, stat: 'mental' },
-            { id: 'cardio', title: '15 min Cardio intensif', xp: 230, stat: 'endurance' },
-            { id: 'fullbody', title: 'Full Body Workout', xp: 250, stat: 'force' },
-            { id: 'morningchallenge', title: 'Défi matinal', xp: 180, stat: 'discipline' },
-            { id: 'hiit', title: '20 min HIIT', xp: 250, stat: 'endurance' }
+            { id: 'pompes', title: '20 Pompes', xp: 200, stat: 'force' },
+            { id: 'pompes_diamant', title: '10 Pompes Diamant', xp: 220, stat: 'force' },
+            { id: 'pompes_larges', title: '15 Pompes Larges', xp: 210, stat: 'force' },
+            { id: 'squats', title: '30 Squats', xp: 200, stat: 'endurance' },
+            { id: 'squats_sautes', title: '15 Squats Sautés', xp: 250, stat: 'endurance' },
+            { id: 'fentes', title: '20 Fentes (10/jambe)', xp: 200, stat: 'force' },
+            { id: 'gainage', title: '45 sec Gainage', xp: 200, stat: 'endurance' },
+            { id: 'gainage_cote', title: '30 sec Gainage Côté', xp: 220, stat: 'endurance' },
+            { id: 'mountain_climber', title: '30 Mountain Climbers', xp: 200, stat: 'endurance' },
+            { id: 'burpees', title: '10 Burpees', xp: 300, stat: 'discipline' },
+            { id: 'releve_jambes', title: '15 Relevés de jambes', xp: 200, stat: 'discipline' },
+            { id: 'crunch', title: '25 Crunchs', xp: 200, stat: 'discipline' }
         ];
         this.dailyMissions = exercises.sort(() => Math.random() - 0.5).slice(0, 3);
     }
 
-    completeWeeklyMission(id) {
-        const idx = (this.weeklyMissions || []).findIndex(m => m.id === id);
-        if (idx === -1) return;
-        const m = this.weeklyMissions[idx];
-        this.data.xp += m.xp;
-        this.data.stats[m.stat] = (this.data.stats[m.stat] || 0) + 1;
-        this.addHistory('Mission hebdo : ' + m.title, m.xp);
-        // remove so it doesn't show again
-        this.weeklyMissions.splice(idx, 1);
-        this.checkLevelUp();
-        this.checkBadges();
-        this.save();
-        this.renderAll();
-        this.showRPMessage('Mission hebdo accomplie ! +' + m.xp + ' XP.');
-    }
-
-    completeMonthlyMission(id) {
-        const idx = (this.monthlyMissions || []).findIndex(m => m.id === id);
-        if (idx === -1) return;
-        const m = this.monthlyMissions[idx];
-        this.data.xp += m.xp;
-        this.data.stats[m.stat] = (this.data.stats[m.stat] || 0) + 1;
-        this.addHistory('Défi mensuel : ' + m.title, m.xp);
-        this.monthlyMissions.splice(idx, 1);
-        this.checkLevelUp();
-        this.checkBadges();
-        this.save();
-        this.renderAll();
-        this.showRPMessage('Défi mensuel accompli ! +' + m.xp + ' XP.');
-    }
-
-    completeCustomMission(index) {
-        const m = this.data.customMissions[index];
-        if (!m) return;
-        if (m.xp) this.data.xp += m.xp;
-        if (m.stat) this.data.stats[m.stat] = (this.data.stats[m.stat] || 0) + 1;
-        this.addHistory('Mission personnalisée : ' + m.title, m.xp || 0);
-        // remove custom mission after completion
-        this.data.customMissions.splice(index, 1);
-        this.checkLevelUp();
-        this.checkBadges();
-        this.save();
-        this.renderAll();
-        this.showRPMessage('Mission personnalisée accomplie. Bravo !');
-    }
-
-    addCustomMission(text) {
-        const id = 'custom_' + Date.now();
-        this.data.customMissions.push({ id, title: text.trim(), xp: 150, stat: '' });
-        this.save();
-        this.renderPortails();
-    }
-
     completeMission(id) {
-        // look for mission in any active pool (daily, weekly, monthly, default list)
         let m = null;
         [this.dailyMissions, this.weeklyMissions, this.monthlyMissions].forEach(pool => {
             if (pool && !m) {
@@ -294,11 +225,8 @@ class ShadowMuscle {
                 if (found) m = found;
             }
         });
-        if (!m) {
-            m = this.MISSIONS.find(x => x.id === id);
-        }
+        if (!m) m = this.MISSIONS.find(x => x.id === id);
         if (!m) return;
-
         this.data.xp += m.xp;
         if (m.stat) this.data.stats[m.stat] = (this.data.stats[m.stat] || 0) + 1;
         this.addHistory('Mission accomplie : ' + m.title, m.xp);
@@ -310,7 +238,7 @@ class ShadowMuscle {
     }
 
     checkLevelUp() {
-        const nextXP = this.data.level * 500;
+        const nextXP = this.data.level * 150;
         if (this.data.xp >= nextXP) {
             this.data.level++;
             this.data.xp -= nextXP;
@@ -354,17 +282,16 @@ class ShadowMuscle {
     showRPMessage(msg) {
         const div = document.createElement('div');
         div.className = 'rp-overlay';
-        div.innerHTML = `
-            <div class="rp-modal">
-                <p>${msg}</p>
-                <button onclick="this.parentElement.parentElement.remove()">ACCEPTER</button>
+        div.innerHTML = \`
+            <div class=\"rp-modal\">
+                <p>\${msg}</p>
+                <button onclick=\"this.parentElement.parentElement.remove()\">ACCEPTER</button>
             </div>
-        `;
+        \`;
         document.body.appendChild(div);
     }
 
     setupEventListeners() {
-        // add custom mission button
         const addBtn = document.getElementById('addMission');
         if (addBtn) {
             addBtn.addEventListener('click', () => {
@@ -377,9 +304,30 @@ class ShadowMuscle {
         }
     }
 
+    addCustomMission(text) {
+        const id = 'custom_' + Date.now();
+        this.data.customMissions.push({ id, title: text.trim(), xp: 0, stat: '' });
+        this.save();
+        this.renderPortails();
+    }
+
+    completeCustomMission(index) {
+        const m = this.data.customMissions[index];
+        if (!m) return;
+        if (m.xp) this.data.xp += m.xp;
+        if (m.stat) this.data.stats[m.stat] = (this.data.stats[m.stat] || 0) + 1;
+        this.addHistory('Mission personnalisée : ' + m.title, m.xp || 0);
+        this.data.customMissions.splice(index, 1);
+        this.checkLevelUp();
+        this.checkBadges();
+        this.save();
+        this.renderAll();
+        this.showRPMessage('Mission personnalisée accomplie. Bravo !');
+    }
+
     setupSubTabs() {
         const container = document.querySelector('.subtab-nav');
-        if (!container) return; // no secondary tabs present
+        if (!container) return;
         container.addEventListener('click', e => {
             const btn = e.target.closest('.subtab-btn');
             if (!btn) return;
@@ -398,12 +346,10 @@ class ShadowMuscle {
     }
 
     requestNotify() {
-        if ("Notification" in window && Notification.permission === "default") {
+        if (\"Notification\" in window && Notification.permission === \"default\") {
             Notification.requestPermission();
         }
     }
 }
-
 const app = new ShadowMuscle();
-// we keep a reference on window so inline handlers work and debugging is easier
 window.app = app;
