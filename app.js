@@ -89,12 +89,20 @@ class ShadowMuscle {
             if (!btn) return; // click outside a button
             const tabKey = btn.dataset.tab;
             console.log('ShadowMuscle: tab clicked ->', tabKey);
-            if (!tabKey) return;
-            document.querySelectorAll('.tab-btn, .tab-panel').forEach(el => el.classList.remove('active'));
-            btn.classList.add('active');
-            const panel = document.getElementById('tab-' + tabKey);
-            if (panel) panel.classList.add('active');
+            this.switchTab(tabKey);
         });
+    }
+
+    /**
+     * public helper so inline handlers work and easy debugging
+     */
+    switchTab(tabKey) {
+        if (!tabKey) return;
+        document.querySelectorAll('.tab-btn, .tab-panel').forEach(el => el.classList.remove('active'));
+        const btn = document.querySelector(`.tab-btn[data-tab="${tabKey}"]`);
+        if (btn) btn.classList.add('active');
+        const panel = document.getElementById('tab-' + tabKey);
+        if (panel) panel.classList.add('active');
     }
 
     renderAll() {
