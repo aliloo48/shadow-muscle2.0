@@ -69,6 +69,7 @@ class ShadowMuscle {
         ];
 
         this.setupTabs();
+        this.setupSubTabs();
         this.renderAll();
         this.setupEventListeners();
         this.checkStreak();
@@ -77,24 +78,22 @@ class ShadowMuscle {
     }
 
     setupTabs() {
-        // tab buttons should hold a data-tab value matching the suffix of
-        // the panel IDs ("tab-<value>"). extra logging helps track issues
-        const buttons = document.querySelectorAll('.tab-btn');
-        if (!buttons.length) {
-            console.warn('setupTabs: no tab buttons found');
+        // use delegation in case elements are replaced later; only one listener
+        const nav = document.querySelector('.tab-nav');
+        if (!nav) {
+            console.warn('setupTabs: .tab-nav container not found');
             return;
         }
-        buttons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tabKey = btn.dataset.tab;
-                console.log('ShadowMuscle: tab clicked ->', tabKey);
-                if (!tabKey) return;
-                // clear old active classes on both buttons and panels
-                document.querySelectorAll('.tab-btn, .tab-panel').forEach(el => el.classList.remove('active'));
-                btn.classList.add('active');
-                const panel = document.getElementById('tab-' + tabKey);
-                if (panel) panel.classList.add('active');
-            });
+        nav.addEventListener('click', e => {
+            const btn = e.target.closest('.tab-btn');
+            if (!btn) return; // click outside a button
+            const tabKey = btn.dataset.tab;
+            console.log('ShadowMuscle: tab clicked ->', tabKey);
+            if (!tabKey) return;
+            document.querySelectorAll('.tab-btn, .tab-panel').forEach(el => el.classList.remove('active'));
+            btn.classList.add('active');
+            const panel = document.getElementById('tab-' + tabKey);
+            if (panel) panel.classList.add('active');
         });
     }
 
@@ -354,6 +353,27 @@ class ShadowMuscle {
                 }
             });
         }
+    }
+
+    setupSubTabs() {
+        const container = document.querySelector('.subtab-nav');
+        if (!container) return; // no secondary tabs present
+        container.addEventListener('click', e => {
+            const btn = e.target.closest('.subtab-btn');
+            if (!btn) return;
+            const key = btn.dataset.subtab;
+            if (!key) return;
+            container.querySelectorAll('.subtab-btn').forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-selected','false');
+            });
+            btn.classList.add('active');
+            btn.setAttribute('aria-selected','true');
+
+            document.querySelectorAll('.subtab-panel').forEach(p => p.classList.remove('active'));
+            const panel = document.getElementById('sub-' + key);
+            if (panel) panel.classList.add('active');
+        });
     }
 
     requestNotify() {

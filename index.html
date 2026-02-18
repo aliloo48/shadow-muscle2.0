@@ -5,12 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Shadow Muscle</title>
   <link rel="manifest" href="manifest.json">
+  <!-- inline fallback in case external CSS fails -->
+  <style>
+    .tab-nav { background: rgba(0,0,0,0.4); }
+    .tab-btn { background: #111 !important; color: #fff !important; }
+    .tab-btn.active { background: #00d9ff !important; color: #000 !important; }
+  </style>
   <link rel="apple-touch-icon" href="icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#000000">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=4.0">
+  <!-- bump version when deploying to force cache refresh -->
+  <link rel="stylesheet" href="style.css?v=4.1">
 </head>
 <body>
   <div class="geom-shapes">
@@ -38,14 +45,29 @@
     <div id="tab-portails" class="tab-panel active">
       <section id="missions">
         <h2>🌀 Portails à Fermer</h2>
-        <h3 class="mission-category daily">📅 Quotidiens</h3>
-        <div id="dailyMissions"></div>
-        <h3 class="mission-category weekly">🔥 Hebdomadaires</h3>
-        <div id="weeklyMissions"></div>
-        <h3 class="mission-category monthly">🏆 Mensuels</h3>
-        <div id="monthlyMissions"></div>
-        <h3 class="mission-category custom">⭐ Personnalisés</h3>
-        <div id="customMissions"></div>
+        <!-- secondary navigation between mission categories -->
+        <nav class="subtab-nav" role="tablist">
+          <button type="button" class="subtab-btn active" data-subtab="daily" aria-controls="sub-daily" aria-selected="true">📅 Quotidiens</button>
+          <button type="button" class="subtab-btn" data-subtab="weekly" aria-controls="sub-weekly" aria-selected="false">🔥 Hebdomadaires</button>
+          <button type="button" class="subtab-btn" data-subtab="monthly" aria-controls="sub-monthly" aria-selected="false">🏆 Mensuels</button>
+          <button type="button" class="subtab-btn" data-subtab="custom" aria-controls="sub-custom" aria-selected="false">⭐ Personnalisés</button>
+        </nav>
+        <div id="sub-daily" class="subtab-panel active" role="tabpanel" aria-labelledby="" >
+          <h3 class="mission-category daily">📅 Quotidiens</h3>
+          <div id="dailyMissions"></div>
+        </div>
+        <div id="sub-weekly" class="subtab-panel" role="tabpanel">
+          <h3 class="mission-category weekly">🔥 Hebdomadaires</h3>
+          <div id="weeklyMissions"></div>
+        </div>
+        <div id="sub-monthly" class="subtab-panel" role="tabpanel">
+          <h3 class="mission-category monthly">🏆 Mensuels</h3>
+          <div id="monthlyMissions"></div>
+        </div>
+        <div id="sub-custom" class="subtab-panel" role="tabpanel">
+          <h3 class="mission-category custom">⭐ Personnalisés</h3>
+          <div id="customMissions"></div>
+        </div>
         <div class="mission-input-group">
           <input type="text" id="newMission" placeholder="Nouvelle mission (ex: 50 pompes +2 force)">
           <button id="addMission">Ajouter</button>
@@ -90,6 +112,6 @@
     <section id="levelUpPopup" class="hidden"><div class="popup-content"><h2>LEVEL UP !</h2><p id="levelUpText"></p><button id="closePopup">OK</button></div></section>
     <section id="badgePopup" class="hidden"><div class="popup-content"><h2>🏆 NOUVEL ARTEFACT !</h2><p id="badgePopupText"></p><button id="closeBadgePopup">OK</button></div></section>
   </div>
-  <script src="app.js?v=4.0"></script>
+  <script src="app.js?v=4.1"></script>
 </body>
 </html>
