@@ -2,11 +2,10 @@
  * SHADOW MUSCLE - SYSTEM ENGINE v4.0
  * Thème : Solo Leveling / RPG
  */
-
 class ShadowMuscle {
     constructor() {
-        this.initData();               // load saved data (including custom missions)
-        this.init();                   // start app logic
+        this.initData(); // load saved data (including custom missions)
+        this.init(); // start app logic
     }
 
     initData() {
@@ -31,10 +30,9 @@ class ShadowMuscle {
                 lastDate: null,
                 badges: [],
                 history: [],
-                customMissions: []         // user‑defined missions
+                customMissions: [] // user-defined missions
             };
         }
-
         // ensure we always have a place for custom missions when reloading
         this.data.customMissions = this.data.customMissions || [];
 
@@ -48,24 +46,25 @@ class ShadowMuscle {
         ];
 
         this.MISSIONS = [
-            { id: 'pompes', title: '100 Pompes', xp: 40, stat: 'force' },
-            { id: 'squats', title: '100 Squats', xp: 40, stat: 'force' },
-            { id: 'abdos', title: '100 Abdos', xp: 40, stat: 'discipline' },
-            { id: 'run', title: '10km Course', xp: 100, stat: 'endurance' },
-            { id: 'lecture', title: 'Lecture 30min', xp: 30, stat: 'mental' },
-            { id: 'meditation', title: 'Méditation 10min', xp: 30, stat: 'aura' }
+            { id: 'pompes', title: '100 Pompes', xp: 200, stat: 'force' },
+            { id: 'squats', title: '100 Squats', xp: 200, stat: 'force' },
+            { id: 'abdos', title: '100 Abdos', xp: 180, stat: 'discipline' },
+            { id: 'run', title: '10km Course', xp: 250, stat: 'endurance' },
+            { id: 'lecture', title: 'Lecture 30min', xp: 150, stat: 'mental' },
+            { id: 'meditation', title: 'Méditation 10min', xp: 150, stat: 'aura' }
         ];
     }
 
     init() {
         // prepare mission pools before rendering
         this.generateDailyMissions();
+
         // simple static weekly / monthly samples – could be replaced by more complex logic later
         this.weeklyMissions = [
-            { id: 'hebdo_5jours', title: 'Fermer 5 jours consécutifs', xp: 150, stat: 'discipline' }
+            { id: 'hebdo_5jours', title: 'Fermer 5 jours consécutifs', xp: 500, stat: 'discipline' }
         ];
         this.monthlyMissions = [
-            { id: 'mensuel_30jours', title: 'Fermer 30 jours consécutifs', xp: 500, stat: 'aura' }
+            { id: 'mensuel_30jours', title: 'Fermer 30 jours consécutifs', xp: 1500, stat: 'aura' }
         ];
 
         this.setupTabs();
@@ -116,12 +115,11 @@ class ShadowMuscle {
         // update level and rank
         const levelEl = document.getElementById('currentLevel');
         if (levelEl) levelEl.textContent = this.data.level;
-
         const rankEl = document.getElementById('rank');
         if (rankEl && this.data.rank) rankEl.textContent = this.data.rank;
 
         // xp bar
-        const nextXP = this.data.level * 150;
+        const nextXP = this.data.level * 500;
         const percent = Math.min((this.data.xp / nextXP) * 100, 100);
         const progress = document.getElementById('xpProgress');
         if (progress) progress.style.width = percent + '%';
@@ -139,42 +137,42 @@ class ShadowMuscle {
         // populate each category container with appropriate missions
         const dailyDiv = document.getElementById('dailyMissions');
         if (dailyDiv) {
-            dailyDiv.innerHTML = (this.dailyMissions || []).map(m =>
-                `<div class="mission">
+            dailyDiv.innerHTML = (this.dailyMissions || []).map(m => `
+                <div class="mission">
                     <span>${m.title} <span class="xp-badge">+${m.xp} XP</span></span>
                     <button class="mission-btn" onclick="app.completeMission('${m.id}')">COMPLÉTER</button>
-                </div>`
-            ).join('');
+                </div>
+            `).join('');
         }
 
         const weeklyDiv = document.getElementById('weeklyMissions');
         if (weeklyDiv) {
-            weeklyDiv.innerHTML = (this.weeklyMissions || []).map(m =>
-                `<div class="mission">
+            weeklyDiv.innerHTML = (this.weeklyMissions || []).map(m => `
+                <div class="mission">
                     <span>${m.title} <span class="xp-badge">+${m.xp} XP</span></span>
-                    <button class="mission-btn" onclick="app.completeWeeklyMission('${m.id}')">COMPLÉTER</button>
-                </div>`
-            ).join('');
+                    <button class="mission-btn" onclick="app.completeMission('${m.id}')">COMPLÉTER</button>
+                </div>
+            `).join('');
         }
 
         const monthlyDiv = document.getElementById('monthlyMissions');
         if (monthlyDiv) {
-            monthlyDiv.innerHTML = (this.monthlyMissions || []).map(m =>
-                `<div class="mission">
+            monthlyDiv.innerHTML = (this.monthlyMissions || []).map(m => `
+                <div class="mission">
                     <span>${m.title} <span class="xp-badge">+${m.xp} XP</span></span>
-                    <button class="mission-btn" onclick="app.completeMonthlyMission('${m.id}')">COMPLÉTER</button>
-                </div>`
-            ).join('');
+                    <button class="mission-btn" onclick="app.completeMission('${m.id}')">COMPLÉTER</button>
+                </div>
+            `).join('');
         }
 
         const customDiv = document.getElementById('customMissions');
         if (customDiv) {
-            customDiv.innerHTML = (this.data.customMissions || []).map((m, i) =>
-                `<div class="mission">
+            customDiv.innerHTML = (this.data.customMissions || []).map((m, i) => `
+                <div class="mission">
                     <span>${m.title}${m.xp ? ` <span class="xp-badge">+${m.xp} XP</span>` : ''}</span>
                     <button class="mission-btn" onclick="app.completeCustomMission(${i})">COMPLÉTER</button>
-                </div>`
-            ).join('');
+                </div>
+            `).join('');
         }
     }
 
@@ -184,8 +182,13 @@ class ShadowMuscle {
         if (container) {
             container.innerHTML = this.BADGES_DB.map(b => {
                 const owned = this.data.badges.includes(b.id);
-                return '<div class="artefact-card ' + (owned ? '' : 'locked') + '"><div class="artefact-icon">' + b.icon + '</div>' +
-                       '<div class="artefact-name">' + b.name + '</div><div class="artefact-desc">' + b.desc + '</div></div>';
+                return `
+                    <div class="badge-card ${owned ? '' : 'locked'}">
+                        <span class="badge-icon">${b.icon}</span>
+                        <div class="badge-name">${b.name}</div>
+                        <div class="badge-desc">${b.desc}</div>
+                    </div>
+                `;
             }).join('');
         }
     }
@@ -193,30 +196,38 @@ class ShadowMuscle {
     renderGrimoire() {
         const container = document.getElementById('history-container') || document.getElementById('historyContainer');
         if (container) {
-            container.innerHTML = this.data.history.slice(-14).reverse().map(h => 
-                '<div class="history-item"><span>[' + h.date + ']</span><span>' + h.text + '</span><span style="color:var(--neon-blue)">+' + h.xp + ' XP</span></div>'
-            ).join('');
+            container.innerHTML = this.data.history.slice(-14).reverse().map(h => `
+                <div class="history-day success">
+                    <span class="history-date">[${h.date}] ${h.text}</span>
+                    <span>+${h.xp} XP</span>
+                </div>
+            `).join('');
         }
     }
 
     // ---------- mission helper methods ----------
+
     generateDailyMissions() {
         // pick 3 random items from a pool of exercises
         const exercises = [
-            { id: 'pompes', title: '100 Pompes', xp: 40, stat: 'force' },
-            { id: '30pompes', title: '30 Pompes explosives', xp: 45, stat: 'force' },
-            { id: 'onehand', title: '100 Pompes à une main', xp: 80, stat: 'force' },
-            { id: 'squats', title: '100 Squats', xp: 40, stat: 'endurance' },
-            { id: '50squats', title: '50 Squats profonds', xp: 50, stat: 'endurance' },
-            { id: '200squats', title: '200 Squats', xp: 70, stat: 'endurance' },
-            { id: 'meditation', title: '30 min Méditation', xp: 30, stat: 'mental' },
-            { id: 'lecture', title: 'Lecture 30min', xp: 30, stat: 'mental' },
-            { id: 'yoga', title: '30 min Yoga', xp: 35, stat: 'mental' },
-            { id: 'shadowboxing', title: '20 min Shadow Boxing', xp: 60, stat: 'discipline' },
-            { id: 'sparring', title: '30 min Sparring', xp: 70, stat: 'discipline' },
-            { id: 'cardio', title: '15 min Cardio intensif', xp: 55, stat: 'endurance' },
-            { id: 'fullbody', title: 'Full Body Workout', xp: 90, stat: 'force' },
-            { id: 'morningchallenge', title: 'Défi matinal', xp: 65, stat: 'discipline' }
+            // BOXE
+            { id: 'shadowboxing', title: '20 min Shadow Boxing', xp: 200, stat: 'discipline' },
+            { id: 'sparring', title: '30 min Sparring', xp: 250, stat: 'discipline' },
+            { id: 'sac', title: '3 rounds Sac de Frappe', xp: 220, stat: 'force' },
+            // MUSCU
+            { id: 'pompes', title: '100 Pompes', xp: 200, stat: 'force' },
+            { id: '30pompes', title: '30 Pompes explosives', xp: 210, stat: 'force' },
+            { id: 'onehand', title: '10 Pompes à une main', xp: 250, stat: 'force' },
+            { id: 'squats', title: '100 Squats', xp: 200, stat: 'endurance' },
+            { id: '50squats', title: '50 Squats profonds', xp: 210, stat: 'endurance' },
+            { id: '200squats', title: '200 Squats', xp: 250, stat: 'endurance' },
+            // MENTAL & CARDIO
+            { id: 'meditation', title: '30 min Méditation', xp: 150, stat: 'mental' },
+            { id: 'lecture', title: 'Lecture 30min', xp: 150, stat: 'mental' },
+            { id: 'cardio', title: '15 min Cardio intensif', xp: 230, stat: 'endurance' },
+            { id: 'fullbody', title: 'Full Body Workout', xp: 250, stat: 'force' },
+            { id: 'morningchallenge', title: 'Défi matinal', xp: 180, stat: 'discipline' },
+            { id: 'hiit', title: '20 min HIIT', xp: 250, stat: 'endurance' }
         ];
         this.dailyMissions = exercises.sort(() => Math.random() - 0.5).slice(0, 3);
     }
@@ -269,7 +280,7 @@ class ShadowMuscle {
 
     addCustomMission(text) {
         const id = 'custom_' + Date.now();
-        this.data.customMissions.push({ id, title: text.trim(), xp: 0, stat: '' });
+        this.data.customMissions.push({ id, title: text.trim(), xp: 150, stat: '' });
         this.save();
         this.renderPortails();
     }
@@ -290,7 +301,6 @@ class ShadowMuscle {
 
         this.data.xp += m.xp;
         if (m.stat) this.data.stats[m.stat] = (this.data.stats[m.stat] || 0) + 1;
-        
         this.addHistory('Mission accomplie : ' + m.title, m.xp);
         this.checkLevelUp();
         this.checkBadges();
@@ -300,7 +310,7 @@ class ShadowMuscle {
     }
 
     checkLevelUp() {
-        const nextXP = this.data.level * 150;
+        const nextXP = this.data.level * 500;
         if (this.data.xp >= nextXP) {
             this.data.level++;
             this.data.xp -= nextXP;
@@ -317,7 +327,6 @@ class ShadowMuscle {
             if (b.type === 'level' && this.data.level >= b.req) met = true;
             if (b.type === 'mission' && this.data.history.length >= b.req) met = true;
             if (b.type === 'streak' && this.data.streak >= b.req) met = true;
-            
             if (met) {
                 this.data.badges.push(b.id);
                 this.showRPMessage('NOUVEL ARTEFACT : ' + b.name + ' ! ' + b.icon);
@@ -345,7 +354,12 @@ class ShadowMuscle {
     showRPMessage(msg) {
         const div = document.createElement('div');
         div.className = 'rp-overlay';
-        div.innerHTML = '<div class="rp-box"><p>' + msg + '</p><button onclick="this.parentElement.parentElement.remove()">ACCEPTER</button></div>';
+        div.innerHTML = `
+            <div class="rp-modal">
+                <p>${msg}</p>
+                <button onclick="this.parentElement.parentElement.remove()">ACCEPTER</button>
+            </div>
+        `;
         document.body.appendChild(div);
     }
 
@@ -377,7 +391,6 @@ class ShadowMuscle {
             });
             btn.classList.add('active');
             btn.setAttribute('aria-selected','true');
-
             document.querySelectorAll('.subtab-panel').forEach(p => p.classList.remove('active'));
             const panel = document.getElementById('sub-' + key);
             if (panel) panel.classList.add('active');
