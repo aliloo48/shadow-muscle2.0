@@ -2324,4 +2324,24 @@ body::before {
   .status-card { grid-template-columns: 1fr; }
   .badges-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
 }
+
+/* ===== ONGLETS : masquer/afficher les panels ===== */
+.tab-panel {
+    display: none !important;
+}
+.tab-panel.active {
+    display: block !important;
+    animation: fadeIn 0.4s ease forwards;
+}
+
+/* Fix: sections toujours visibles dans les panels actifs */
+.tab-panel.active section {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    animation: none !important;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
