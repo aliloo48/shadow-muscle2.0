@@ -12,8 +12,17 @@ class ShadowMuscle {
     initData() {
         const saved = localStorage.getItem('shadow_muscle_save');
         if (saved) {
-            this.data = JSON.parse(saved);
-        } else {
+            try {
+                this.data = JSON.parse(saved);
+            } catch (e) {
+                // corrupted save, drop it and start fresh
+                console.warn('ShadowMuscle: failed to parse saved data, resetting.', e);
+                localStorage.removeItem('shadow_muscle_save');
+                this.data = null;
+            }
+        }
+
+        if (!this.data) {
             this.data = {
                 level: 1,
                 xp: 0,
@@ -68,11 +77,18 @@ class ShadowMuscle {
     }
 
     setupTabs() {
-        // corrected logic: panels have ids like "tab-portails" while buttons carry data-tab="portails".
-        // previous implementation tried to match the raw value and failed, stopping the script early.
-        document.querySelectorAll('.tab-btn').forEach(btn => {
+        // tab buttons should hold a data-tab value matching the suffix of
+        // the panel IDs ("tab-<value>"). extra logging helps track issues
+        const buttons = document.querySelectorAll('.tab-btn');
+        if (!buttons.length) {
+            console.warn('setupTabs: no tab buttons found');
+            return;
+        }
+        buttons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const tabKey = btn.dataset.tab;
+                console.log('ShadowMuscle: tab clicked ->', tabKey);
+                if (!tabKey) return;
                 // clear old active classes on both buttons and panels
                 document.querySelectorAll('.tab-btn, .tab-panel').forEach(el => el.classList.remove('active'));
                 btn.classList.add('active');
@@ -156,7 +172,8 @@ class ShadowMuscle {
     }
 
     renderArtefacts() {
-        const container = document.getElementById('badges-container');
+        // some HTML versions use camelCase IDs – support both for backwards compatibility
+        const container = document.getElementById('badges-container') || document.getElementById('badgesContainer');
         if (container) {
             container.innerHTML = this.BADGES_DB.map(b => {
                 const owned = this.data.badges.includes(b.id);
@@ -167,7 +184,7 @@ class ShadowMuscle {
     }
 
     renderGrimoire() {
-        const container = document.getElementById('history-container');
+        const container = document.getElementById('history-container') || document.getElementById('historyContainer');
         if (container) {
             container.innerHTML = this.data.history.slice(-14).reverse().map(h => 
                 '<div class="history-item"><span>[' + h.date + ']</span><span>' + h.text + '</span><span style="color:var(--neon-blue)">+' + h.xp + ' XP</span></div>'
@@ -347,3 +364,5 @@ class ShadowMuscle {
 }
 
 const app = new ShadowMuscle();
+// we keep a reference on window so inline handlers work and debugging is easier
+window.app = app;
