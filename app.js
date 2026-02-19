@@ -1,5 +1,5 @@
 /**
- * SHADOW MUSCLE - SYSTEM ENGINE v4.0
+ * SHADOW MUSCLE - SYSTEM ENGINE v5.0
  * Thème : Solo Leveling / RPG
  */
 class ShadowMuscle {
@@ -40,6 +40,7 @@ class ShadowMuscle {
         }
 
         this.data.customMissions = this.data.customMissions || [];
+        this.data.completedMissions = this.data.completedMissions || [];
 
         this.BADGES_DB = [
             { id: 'first_step', name: 'Éveil', desc: 'Première mission complétée', icon: '⚔️', type: 'mission', req: 1 },
@@ -63,18 +64,19 @@ class ShadowMuscle {
     init() {
         this.generateDailyMissions();
         this.weeklyMissions = [
-            { id: 'hebdo_5jours', title: 'S' + 'é' + 'rie de 5 jours', xp: 1000, stat: 'discipline' }
+            { id: 'hebdo_5jours', title: 'Série de 5 jours', xp: 1000, stat: 'discipline' }
         ];
         this.monthlyMissions = [
-            { id: 'mensuel_30jours', title: 'S' + 'é' + 'rie de 30 jours', xp: 5000, stat: 'aura' }
+            { id: 'mensuel_30jours', title: 'Série de 30 jours', xp: 5000, stat: 'aura' }
         ];
         this.setupTabs();
         this.setupSubTabs();
         this.renderAll();
         this.setupEventListeners();
         this.checkStreak();
+        this.registerServiceWorker();
         this.requestNotify();
-        console.log(\"System : Initialized. System: Arise.\");
+        console.log('System : Initialized. System: Arise.');
     }
 
     setupTabs() {
@@ -90,7 +92,7 @@ class ShadowMuscle {
     switchTab(tabKey) {
         if (!tabKey) return;
         document.querySelectorAll('.tab-btn, .tab-panel').forEach(el => el.classList.remove('active'));
-        const btn = document.querySelector(`.tab-btn[data-tab=\"${tabKey}\"]`);
+        const btn = document.querySelector('.tab-btn[data-tab="' + tabKey + '"]');
         if (btn) btn.classList.add('active');
         const panel = document.getElementById('tab-' + tabKey);
         if (panel) panel.classList.add('active');
@@ -103,15 +105,27 @@ class ShadowMuscle {
         this.renderGrimoire();
     }
 
+    getRank(level) {
+        if (level >= 50) return 'S - Monarque';
+        if (level >= 30) return 'A - National';
+        if (level >= 15) return 'C - Vétéran';
+        if (level >= 5) return 'E - Chasseur';
+        return 'E - Débutant';
+    }
+
     renderStatus() {
         const levelEl = document.getElementById('currentLevel');
         if (levelEl) levelEl.textContent = this.data.level;
+        const rankEl = document.getElementById('rank');
+        if (rankEl) rankEl.textContent = this.getRank(this.data.level);
+        const streakEl = document.getElementById('streakCount');
+        if (streakEl) streakEl.textContent = this.data.streak;
         const nextXP = this.data.level * 150;
         const percent = Math.min((this.data.xp / nextXP) * 100, 100);
         const progress = document.getElementById('xpProgress');
         if (progress) progress.style.width = percent + '%';
         const xpText = document.getElementById('xpText');
-        if (xpText) xpText.textContent = `${this.data.xp} / ${nextXP} XP`;
+        if (xpText) xpText.textContent = this.data.xp + ' / ' + nextXP + ' XP';
         ['force','endurance','mental','discipline','aura'].forEach(stat => {
             const el = document.getElementById(stat);
             if (el) el.textContent = this.data.stats[stat] || 0;
@@ -119,88 +133,86 @@ class ShadowMuscle {
     }
 
     renderPortails() {
-        const dailyDiv = document.getElementById('dailyMissions');
+        var self = this;
+        var renderMissionCard = function(m) {
+            var done = self.data.completedMissions.includes(m.id);
+            return '<div class="mission-card' + (done ? ' mission-completed' : '') + '">' +
+                '<div class="mission-info">' +
+                    '<span class="mission-title">' + m.title + '</span>' +
+                    '<span class="mission-xp">+' + m.xp + ' XP</span>' +
+                '</div>' +
+                (done
+                    ? '<span class="btn-done">TERMINÉ ✓</span>'
+                    : '<button class="btn-complete" onclick="app.completeMission(\'' + m.id + '\')">COMPLÉTER</button>') +
+            '</div>';
+        };
+        var dailyDiv = document.getElementById('dailyMissions');
         if (dailyDiv) {
-            dailyDiv.innerHTML = (this.dailyMissions || []).map(m => \`
-                <div class=\"mission-card\">
-                    <div class=\"mission-info\">
-                        <span class=\"mission-title\">\${m.title}</span>
-                        <span class=\"mission-xp\">+\${m.xp} XP</span>
-                    </div>
-                    <button class=\"btn-complete\" onclick=\"app.completeMission('\${m.id}')\">COMPLÉTER</button>
-                </div>
-            \`).join('');
+            dailyDiv.innerHTML = (this.dailyMissions || []).map(renderMissionCard).join('');
         }
-        const weeklyDiv = document.getElementById('weeklyMissions');
+        var weeklyDiv = document.getElementById('weeklyMissions');
         if (weeklyDiv) {
-            weeklyDiv.innerHTML = (this.weeklyMissions || []).map(m => \`
-                <div class=\"mission-card\">
-                    <div class=\"mission-info\">
-                        <span class=\"mission-title\">\${m.title}</span>
-                        <span class=\"mission-xp\">+\${m.xp} XP</span>
-                    </div>
-                    <button class=\"btn-complete\" onclick=\"app.completeMission('\${m.id}')\">COMPLÉTER</button>
-                </div>
-            \`).join('');
+            weeklyDiv.innerHTML = (this.weeklyMissions || []).map(renderMissionCard).join('');
         }
-        const monthlyDiv = document.getElementById('monthlyMissions');
+        var monthlyDiv = document.getElementById('monthlyMissions');
         if (monthlyDiv) {
-            monthlyDiv.innerHTML = (this.monthlyMissions || []).map(m => \`
-                <div class=\"mission-card\">
-                    <div class=\"mission-info\">
-                        <span class=\"mission-title\">\${m.title}</span>
-                        <span class=\"mission-xp\">+\${m.xp} XP</span>
-                    </div>
-                    <button class=\"btn-complete\" onclick=\"app.completeMission('\${m.id}')\">COMPLÉTER</button>
-                </div>
-            \`).join('');
+            monthlyDiv.innerHTML = (this.monthlyMissions || []).map(renderMissionCard).join('');
         }
-        const customDiv = document.getElementById('customMissions');
+        var customDiv = document.getElementById('customMissions');
         if (customDiv) {
-            customDiv.innerHTML = (this.data.customMissions || []).map((m, i) => \`
-                <div class=\"mission-card\">
-                    <div class=\"mission-info\">
-                        <span class=\"mission-title\">\${m.title}\${m.xp ? \` (+\${m.xp} XP)\` : ''}</span>
-                    </div>
-                    <button class=\"btn-complete\" onclick=\"app.completeCustomMission(\${i})\">COMPLÉTER</button>
-                </div>
-            \`).join('');
+            customDiv.innerHTML = (this.data.customMissions || []).map(function(m, i) {
+                return '<div class="mission-card">' +
+                    '<div class="mission-info">' +
+                        '<span class="mission-title">' + m.title + (m.xp ? ' (+' + m.xp + ' XP)' : '') + '</span>' +
+                    '</div>' +
+                    '<button class="btn-complete" onclick="app.completeCustomMission(' + i + ')">COMPLÉTER</button>' +
+                '</div>';
+            }).join('');
         }
     }
 
     renderArtefacts() {
-        const container = document.getElementById('badges-container') || document.getElementById('badgesContainer');
+        var container = document.getElementById('badges-container') || document.getElementById('badgesContainer');
         if (container) {
-            container.innerHTML = this.BADGES_DB.map(b => {
-                const owned = this.data.badges.includes(b.id);
-                return \`
-                    <div class=\"badge-item \${owned ? 'owned' : 'locked'}\" title=\"\${b.desc}\">
-                        <div class=\"badge-icon\">\${b.icon}</div>
-                        <div class=\"badge-details\">
-                            <span class=\"badge-name\">\${b.name}</span>
-                            <span class=\"badge-desc\">\${b.desc}</span>
-                        </div>
-                    </div>
-                \`;
+            var self = this;
+            container.innerHTML = this.BADGES_DB.map(function(b) {
+                var owned = self.data.badges.includes(b.id);
+                return '<div class="badge-card ' + (owned ? 'owned' : 'locked') + '" title="' + b.desc + '">' +
+                    '<div class="badge-icon">' + b.icon + '</div>' +
+                    '<div class="badge-details">' +
+                        '<span class="badge-name">' + b.name + '</span>' +
+                        '<span class="badge-desc">' + b.desc + '</span>' +
+                    '</div>' +
+                '</div>';
             }).join('');
         }
     }
 
     renderGrimoire() {
-        const container = document.getElementById('history-container') || document.getElementById('historyContainer');
+        var container = document.getElementById('history-container') || document.getElementById('historyContainer');
         if (container) {
-            container.innerHTML = this.data.history.slice(-14).reverse().map(h => \`
-                <div class=\"history-item\">
-                    <span class=\"history-date\">[\${h.date}]</span>
-                    <span class=\"history-text\">\${h.text}</span>
-                    <span class=\"history-xp\">+\${h.xp} XP</span>
-                </div>
-            \`).join('');
+            if (this.data.history.length === 0) {
+                container.innerHTML = '<p class="intro">Aucune mission accomplie pour le moment.</p>';
+                return;
+            }
+            container.innerHTML = this.data.history.slice(-14).reverse().map(function(h) {
+                return '<div class="history-day">' +
+                    '<span class="history-date">[' + h.date + ']</span>' +
+                    '<span class="history-text">' + h.text + '</span>' +
+                    '<span class="history-xp">+' + h.xp + ' XP</span>' +
+                '</div>';
+            }).join('');
         }
     }
 
     generateDailyMissions() {
-        const exercises = [
+        var today = new Date().toLocaleDateString('fr-FR');
+        if (this.data.completedMissionsDate !== today) {
+            this.data.completedMissions = [];
+            this.data.completedMissionsDate = today;
+            this.save();
+        }
+        var exercises = [
             { id: 'pompes', title: '20 Pompes', xp: 200, stat: 'force' },
             { id: 'pompes_diamant', title: '10 Pompes Diamant', xp: 220, stat: 'force' },
             { id: 'pompes_larges', title: '15 Pompes Larges', xp: 210, stat: 'force' },
@@ -214,19 +226,21 @@ class ShadowMuscle {
             { id: 'releve_jambes', title: '15 Relevés de jambes', xp: 200, stat: 'discipline' },
             { id: 'crunch', title: '25 Crunchs', xp: 200, stat: 'discipline' }
         ];
-        this.dailyMissions = exercises.sort(() => Math.random() - 0.5).slice(0, 3);
+        this.dailyMissions = exercises.sort(function() { return Math.random() - 0.5; }).slice(0, 3);
     }
 
     completeMission(id) {
-        let m = null;
-        [this.dailyMissions, this.weeklyMissions, this.monthlyMissions].forEach(pool => {
+        if (this.data.completedMissions.includes(id)) return;
+        var m = null;
+        [this.dailyMissions, this.weeklyMissions, this.monthlyMissions].forEach(function(pool) {
             if (pool && !m) {
-                const found = pool.find(x => x.id === id);
+                var found = pool.find(function(x) { return x.id === id; });
                 if (found) m = found;
             }
         });
-        if (!m) m = this.MISSIONS.find(x => x.id === id);
+        if (!m) m = this.MISSIONS.find(function(x) { return x.id === id; });
         if (!m) return;
+        this.data.completedMissions.push(id);
         this.data.xp += m.xp;
         if (m.stat) this.data.stats[m.stat] = (this.data.stats[m.stat] || 0) + 1;
         this.addHistory('Mission accomplie : ' + m.title, m.xp);
@@ -238,33 +252,34 @@ class ShadowMuscle {
     }
 
     checkLevelUp() {
-        const nextXP = this.data.level * 150;
+        var nextXP = this.data.level * 150;
         if (this.data.xp >= nextXP) {
             this.data.level++;
             this.data.xp -= nextXP;
-            Object.keys(this.data.stats).forEach(s => this.data.stats[s] += 2);
+            Object.keys(this.data.stats).forEach(function(s) { this.data.stats[s] += 2; }.bind(this));
             this.showRPMessage('LEVEL UP ! Niveau ' + this.data.level + '. Vos limites ont été repoussées.');
             this.checkLevelUp();
         }
     }
 
     checkBadges() {
-        this.BADGES_DB.forEach(b => {
-            if (this.data.badges.includes(b.id)) return;
-            let met = false;
-            if (b.type === 'level' && this.data.level >= b.req) met = true;
-            if (b.type === 'mission' && this.data.history.length >= b.req) met = true;
-            if (b.type === 'streak' && this.data.streak >= b.req) met = true;
+        var self = this;
+        this.BADGES_DB.forEach(function(b) {
+            if (self.data.badges.includes(b.id)) return;
+            var met = false;
+            if (b.type === 'level' && self.data.level >= b.req) met = true;
+            if (b.type === 'mission' && self.data.history.length >= b.req) met = true;
+            if (b.type === 'streak' && self.data.streak >= b.req) met = true;
             if (met) {
-                this.data.badges.push(b.id);
-                this.showRPMessage('NOUVEL ARTEFACT : ' + b.name + ' ! ' + b.icon);
+                self.data.badges.push(b.id);
+                self.showRPMessage('NOUVEL ARTEFACT : ' + b.name + ' ! ' + b.icon);
             }
         });
     }
 
     addHistory(text, xp) {
-        const date = new Date().toLocaleDateString('fr-FR');
-        this.data.history.push({ date, text, xp });
+        var date = new Date().toLocaleDateString('fr-FR');
+        this.data.history.push({ date: date, text: text, xp: xp });
     }
 
     save() {
@@ -272,7 +287,7 @@ class ShadowMuscle {
     }
 
     checkStreak() {
-        const today = new Date().toLocaleDateString();
+        var today = new Date().toLocaleDateString();
         if (this.data.lastDate === today) return;
         this.data.streak++;
         this.data.lastDate = today;
@@ -280,39 +295,42 @@ class ShadowMuscle {
     }
 
     showRPMessage(msg) {
-        const div = document.createElement('div');
+        var div = document.createElement('div');
         div.className = 'rp-overlay';
-        div.innerHTML = \`
-            <div class=\"rp-modal\">
-                <p>\${msg}</p>
-                <button onclick=\"this.parentElement.parentElement.remove()\">ACCEPTER</button>
-            </div>
-        \`;
+        div.innerHTML = '<div class="rp-modal">' +
+            '<p>' + msg + '</p>' +
+            '<button onclick="this.parentElement.parentElement.remove()">ACCEPTER</button>' +
+        '</div>';
         document.body.appendChild(div);
     }
 
     setupEventListeners() {
-        const addBtn = document.getElementById('addMission');
+        var self = this;
+        var addBtn = document.getElementById('addMission');
         if (addBtn) {
-            addBtn.addEventListener('click', () => {
-                const inp = document.getElementById('newMission');
+            addBtn.addEventListener('click', function() {
+                var inp = document.getElementById('newMission');
                 if (inp && inp.value.trim()) {
-                    this.addCustomMission(inp.value);
+                    self.addCustomMission(inp.value);
                     inp.value = '';
                 }
             });
         }
+        var notifBtn = document.getElementById('enableNotifs');
+        if (notifBtn) {
+            notifBtn.addEventListener('click', function() { self.enableNotifications(); });
+        }
     }
 
     addCustomMission(text) {
-        const id = 'custom_' + Date.now();
-        this.data.customMissions.push({ id, title: text.trim(), xp: 0, stat: '' });
+        var id = 'custom_' + Date.now();
+        this.data.customMissions.push({ id: id, title: text.trim(), xp: 0, stat: '' });
         this.save();
         this.renderPortails();
     }
 
     completeCustomMission(index) {
-        const m = this.data.customMissions[index];
+        var m = this.data.customMissions[index];
         if (!m) return;
         if (m.xp) this.data.xp += m.xp;
         if (m.stat) this.data.stats[m.stat] = (this.data.stats[m.stat] || 0) + 1;
@@ -326,30 +344,94 @@ class ShadowMuscle {
     }
 
     setupSubTabs() {
-        const container = document.querySelector('.subtab-nav');
+        var container = document.querySelector('.subtab-nav');
         if (!container) return;
-        container.addEventListener('click', e => {
-            const btn = e.target.closest('.subtab-btn');
+        container.addEventListener('click', function(e) {
+            var btn = e.target.closest('.subtab-btn');
             if (!btn) return;
-            const key = btn.dataset.subtab;
+            var key = btn.dataset.subtab;
             if (!key) return;
-            container.querySelectorAll('.subtab-btn').forEach(b => {
+            container.querySelectorAll('.subtab-btn').forEach(function(b) {
                 b.classList.remove('active');
                 b.setAttribute('aria-selected','false');
             });
             btn.classList.add('active');
             btn.setAttribute('aria-selected','true');
-            document.querySelectorAll('.subtab-panel').forEach(p => p.classList.remove('active'));
-            const panel = document.getElementById('sub-' + key);
+            document.querySelectorAll('.subtab-panel').forEach(function(p) { p.classList.remove('active'); });
+            var panel = document.getElementById('sub-' + key);
             if (panel) panel.classList.add('active');
         });
     }
 
     requestNotify() {
-        if (\"Notification\" in window && Notification.permission === \"default\") {
+        if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
         }
     }
+
+    enableNotifications() {
+        var self = this;
+        if (!('Notification' in window)) {
+            this.showRPMessage('Les notifications ne sont pas supportées sur ce navigateur.');
+            return;
+        }
+        if (Notification.permission === 'granted') {
+            this.showRPMessage('Les notifications sont déjà activées, Combattant !');
+            this.scheduleReminder();
+            return;
+        }
+        Notification.requestPermission().then(function(permission) {
+            if (permission === 'granted') {
+                self.showRPMessage('Notifications activées ! Tu recevras des rappels de mission.');
+                self.scheduleReminder();
+            } else {
+                self.showRPMessage('Notifications refusées. Tu peux les activer dans les paramètres du navigateur.');
+            }
+        });
+    }
+
+    scheduleReminder() {
+        if (this._reminderInterval) clearInterval(this._reminderInterval);
+        var messages = [
+            'Une nouvelle mission t\'attend, Combattant !',
+            'Le Monarque ne se repose jamais. Entraîne-toi !',
+            'Tes stats stagnent... Lève-toi et combats !',
+            'Les portails ne se ferment pas tout seuls.',
+            'Chaque répétition te rapproche du rang S.'
+        ];
+        // Reminder every 4 hours (fires if tab/PWA is open)
+        this._reminderInterval = setInterval(function() {
+            if (Notification.permission === 'granted') {
+                var msg = messages[Math.floor(Math.random() * messages.length)];
+                new Notification('Shadow Muscle', {
+                    body: msg,
+                    icon: 'icon-192.png',
+                    badge: 'icon-192.png',
+                    vibrate: [200, 100, 200],
+                    tag: 'shadow-muscle-reminder'
+                });
+            }
+        }, 4 * 60 * 60 * 1000);
+        // Send a confirmation notification immediately
+        if (Notification.permission === 'granted') {
+            new Notification('Shadow Muscle', {
+                body: 'Notifications activées ! Prêt au combat.',
+                icon: 'icon-192.png',
+                badge: 'icon-192.png',
+                tag: 'shadow-muscle-welcome'
+            });
+        }
+    }
+
+    registerServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./service-worker.js').then(function(reg) {
+                console.log('Service Worker enregistré.', reg.scope);
+            }).catch(function(err) {
+                console.warn('Service Worker non enregistré :', err);
+            });
+        }
+    }
 }
-const app = new ShadowMuscle();
+var app = new ShadowMuscle();
 window.app = app;

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shadow-muscle-v2';
+const CACHE_NAME = 'shadow-muscle-v4';
 const ASSETS = [
   './',              // important pour iOS/local
   './index.html',
