@@ -63,10 +63,10 @@ class ShadowMuscle {
     init() {
         this.generateDailyMissions();
         this.weeklyMissions = [
-            { id: 'hebdo_5jours', title: 'S' + 'é' + 'rie de 5 jours', xp: 1000, stat: 'discipline' }
+            { id: 'hebdo_5jours', title: 'Série de 5 jours', xp: 1000, stat: 'discipline' }
         ];
         this.monthlyMissions = [
-            { id: 'mensuel_30jours', title: 'S' + 'é' + 'rie de 30 jours', xp: 5000, stat: 'aura' }
+            { id: 'mensuel_30jours', title: 'Série de 30 jours', xp: 5000, stat: 'aura' }
         ];
         this.setupTabs();
         this.setupSubTabs();
@@ -74,7 +74,7 @@ class ShadowMuscle {
         this.setupEventListeners();
         this.checkStreak();
         this.requestNotify();
-        console.log(\"System : Initialized. System: Arise.\");
+        console.log("System : Initialized. System: Arise.");
     }
 
     setupTabs() {
@@ -90,7 +90,7 @@ class ShadowMuscle {
     switchTab(tabKey) {
         if (!tabKey) return;
         document.querySelectorAll('.tab-btn, .tab-panel').forEach(el => el.classList.remove('active'));
-        const btn = document.querySelector(`.tab-btn[data-tab=\"${tabKey}\"]`);
+        const btn = document.querySelector(`.tab-btn[data-tab="${tabKey}"]`);
         if (btn) btn.classList.add('active');
         const panel = document.getElementById('tab-' + tabKey);
         if (panel) panel.classList.add('active');
@@ -121,50 +121,50 @@ class ShadowMuscle {
     renderPortails() {
         const dailyDiv = document.getElementById('dailyMissions');
         if (dailyDiv) {
-            dailyDiv.innerHTML = (this.dailyMissions || []).map(m => \`
-                <div class=\"mission-card\">
-                    <div class=\"mission-info\">
-                        <span class=\"mission-title\">\${m.title}</span>
-                        <span class=\"mission-xp\">+\${m.xp} XP</span>
+            dailyDiv.innerHTML = (this.dailyMissions || []).map(m => `
+                <div class="mission-card">
+                    <div class="mission-info">
+                        <span class="mission-title">${m.title}</span>
+                        <span class="mission-xp">+${m.xp} XP</span>
                     </div>
-                    <button class=\"btn-complete\" onclick=\"app.completeMission('\${m.id}')\">COMPLÉTER</button>
+                    <button class="btn-complete" onclick="app.completeMission('${m.id}')">COMPL&Eacute;TER</button>
                 </div>
-            \`).join('');
+            `).join('');
         }
         const weeklyDiv = document.getElementById('weeklyMissions');
         if (weeklyDiv) {
-            weeklyDiv.innerHTML = (this.weeklyMissions || []).map(m => \`
-                <div class=\"mission-card\">
-                    <div class=\"mission-info\">
-                        <span class=\"mission-title\">\${m.title}</span>
-                        <span class=\"mission-xp\">+\${m.xp} XP</span>
+            weeklyDiv.innerHTML = (this.weeklyMissions || []).map(m => `
+                <div class="mission-card">
+                    <div class="mission-info">
+                        <span class="mission-title">${m.title}</span>
+                        <span class="mission-xp">+${m.xp} XP</span>
                     </div>
-                    <button class=\"btn-complete\" onclick=\"app.completeMission('\${m.id}')\">COMPLÉTER</button>
+                    <button class="btn-complete" onclick="app.completeMission('${m.id}')">COMPL&Eacute;TER</button>
                 </div>
-            \`).join('');
+            `).join('');
         }
         const monthlyDiv = document.getElementById('monthlyMissions');
         if (monthlyDiv) {
-            monthlyDiv.innerHTML = (this.monthlyMissions || []).map(m => \`
-                <div class=\"mission-card\">
-                    <div class=\"mission-info\">
-                        <span class=\"mission-title\">\${m.title}</span>
-                        <span class=\"mission-xp\">+\${m.xp} XP</span>
+            monthlyDiv.innerHTML = (this.monthlyMissions || []).map(m => `
+                <div class="mission-card">
+                    <div class="mission-info">
+                        <span class="mission-title">${m.title}</span>
+                        <span class="mission-xp">+${m.xp} XP</span>
                     </div>
-                    <button class=\"btn-complete\" onclick=\"app.completeMission('\${m.id}')\">COMPLÉTER</button>
+                    <button class="btn-complete" onclick="app.completeMission('${m.id}')">COMPL&Eacute;TER</button>
                 </div>
-            \`).join('');
+            `).join('');
         }
         const customDiv = document.getElementById('customMissions');
         if (customDiv) {
-            customDiv.innerHTML = (this.data.customMissions || []).map((m, i) => \`
-                <div class=\"mission-card\">
-                    <div class=\"mission-info\">
-                        <span class=\"mission-title\">\${m.title}\${m.xp ? \` (+\${m.xp} XP)\` : ''}</span>
+            customDiv.innerHTML = (this.data.customMissions || []).map((m, i) => `
+                <div class="mission-card">
+                    <div class="mission-info">
+                        <span class="mission-title">${m.title}${m.xp ? ` (+${m.xp} XP)` : ''}</span>
                     </div>
-                    <button class=\"btn-complete\" onclick=\"app.completeCustomMission(\${i})\">COMPLÉTER</button>
+                    <button class="btn-complete" onclick="app.completeCustomMission(${i})">COMPL&Eacute;TER</button>
                 </div>
-            \`).join('');
+            `).join('');
         }
     }
 
@@ -173,15 +173,15 @@ class ShadowMuscle {
         if (container) {
             container.innerHTML = this.BADGES_DB.map(b => {
                 const owned = this.data.badges.includes(b.id);
-                return \`
-                    <div class=\"badge-item \${owned ? 'owned' : 'locked'}\" title=\"\${b.desc}\">
-                        <div class=\"badge-icon\">\${b.icon}</div>
-                        <div class=\"badge-details\">
-                            <span class=\"badge-name\">\${b.name}</span>
-                            <span class=\"badge-desc\">\${b.desc}</span>
+                return `
+                    <div class="badge-item ${owned ? 'owned' : 'locked'}" title="${b.desc}">
+                        <div class="badge-icon">${b.icon}</div>
+                        <div class="badge-details">
+                            <span class="badge-name">${b.name}</span>
+                            <span class="badge-desc">${b.desc}</span>
                         </div>
                     </div>
-                \`;
+                `;
             }).join('');
         }
     }
@@ -189,13 +189,13 @@ class ShadowMuscle {
     renderGrimoire() {
         const container = document.getElementById('history-container') || document.getElementById('historyContainer');
         if (container) {
-            container.innerHTML = this.data.history.slice(-14).reverse().map(h => \`
-                <div class=\"history-item\">
-                    <span class=\"history-date\">[\${h.date}]</span>
-                    <span class=\"history-text\">\${h.text}</span>
-                    <span class=\"history-xp\">+\${h.xp} XP</span>
+            container.innerHTML = this.data.history.slice(-14).reverse().map(h => `
+                <div class="history-item">
+                    <span class="history-date">[${h.date}]</span>
+                    <span class="history-text">${h.text}</span>
+                    <span class="history-xp">+${h.xp} XP</span>
                 </div>
-            \`).join('');
+            `).join('');
         }
     }
 
@@ -282,12 +282,12 @@ class ShadowMuscle {
     showRPMessage(msg) {
         const div = document.createElement('div');
         div.className = 'rp-overlay';
-        div.innerHTML = \`
-            <div class=\"rp-modal\">
-                <p>\${msg}</p>
-                <button onclick=\"this.parentElement.parentElement.remove()\">ACCEPTER</button>
+        div.innerHTML = `
+            <div class="rp-modal">
+                <p>${msg}</p>
+                <button onclick="this.parentElement.parentElement.remove()">ACCEPTER</button>
             </div>
-        \`;
+        `;
         document.body.appendChild(div);
     }
 
@@ -346,7 +346,7 @@ class ShadowMuscle {
     }
 
     requestNotify() {
-        if (\"Notification\" in window && Notification.permission === \"default\") {
+        if ("Notification" in window && Notification.permission === "default") {
             Notification.requestPermission();
         }
     }
